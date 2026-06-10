@@ -2,7 +2,30 @@ import pandas as pd
 import time
 import matplotlib.pyplot as plt
 import requests
+from peewee import *
 from bs4 import BeautifulSoup
+
+db = SqliteDatabase('vehicles.db')
+
+class Vehicle(Model):
+    year = IntegerField()
+    make = CharField()
+    model = CharField()
+    extra_text = CharField()
+    mpg = IntegerField()
+    category = CharField()
+    tco_10_years = FloatField()
+
+class Meta:
+    database = db
+        
+Vehicle.create_table()
+Vehicle.create(year=2020, make="Toyota", model="Camry", extra_text="", mpg=29, category="Midsize Car", tco_10_years=35000)
+Vehicle.create(year=2020, make="Honda", model="Civic", extra_text=" 4Dr", mpg=32, category="Compact Car", tco_10_years=30000)
+Vehicle.create(year=2026, make="Toyota", model="Prius", extra_text="", mpg=58, category="Hybrid Car", tco_10_years=25000)   
+
+
+
 
 def get_fuel_data(year, make, model):
     base_url = "https://www.fueleconomy.gov/ws/rest/"
@@ -21,6 +44,7 @@ def get_fuel_data(year, make, model):
     response = requests.get(url, headers=baseheaders)
     data = response.json()
     #print(data['comb08'])
+    
     return data['comb08']
     
     
@@ -45,17 +69,13 @@ list_of_vehicles = [
     {"year": 2020, "make": "Toyota", "model": "Camry", "extra_text": ""},
     {"year": 2020, "make": "Honda", "model": "Civic", "extra_text": " 4Dr"},
     {"year": 2026, "make": "Toyota", "model": "Prius", "extra_text": ""},
-    {"year": 2020, "make": "Honda", "model": "Accord", "extra_text": " 4Dr"},
-    
+    {"year": 2020, "make": "Honda", "model": "Accord", "extra_text": ""},
 ]
 
-
-
-
 for vehicle in list_of_vehicles:
-    mpg = get_fuel_data(vehicle["year"], vehicle["make"], vehicle["model"]+vehicle["extra_text"])
+    mpg = get_fuel_data([vehicle["year"]], vehicle["make"], vehicle["model"]+vehicle["extra_text"])
     ten_year_maintenance_cost = get_maintenance_cost(vehicle["make"], vehicle["model"])
     tco = 11000*10/int(mpg)*4.50 + ten_year_maintenance_cost
     print(f"{vehicle['year']} {vehicle['make']} {vehicle['model']} - Total Cost: ${tco:.2f}")
-    time.sleep(1)
+    time.sleep(1)  # Sleep for 1 second to avoid overwhelming the servers
     
