@@ -2,8 +2,12 @@ import pandas as pd
 import time
 import matplotlib.pyplot as plt
 import requests
-from peewee import *
+from peewee import SqliteDatabase, Model, CharField, FloatField, BooleanField, IntegerField
 from bs4 import BeautifulSoup
+import os
+
+if os.path.exists('vehicles.db'):
+    os.remove('vehicles.db')
 
 db = SqliteDatabase('vehicles.db')
 
@@ -16,14 +20,24 @@ class Vehicle(Model):
     category = CharField()
     tco_10_years = FloatField()
 
-class Meta:
-    database = db
+    class Meta:
+        database = db
         
-Vehicle.create_table()
-Vehicle.create(year=2020, make="Toyota", model="Camry", extra_text="", mpg=29, category="Midsize Car", tco_10_years=35000)
-Vehicle.create(year=2020, make="Honda", model="Civic", extra_text=" 4Dr", mpg=32, category="Compact Car", tco_10_years=30000)
-Vehicle.create(year=2026, make="Toyota", model="Prius", extra_text="", mpg=58, category="Hybrid Car", tco_10_years=25000)   
+db.connect()
+db.create_tables([Vehicle])
 
+list_of_vehicles = [
+    {'year': 2020, 'make': "Toyota", 'model': "Camry", 'extra_text': "", 'mpg': 29, 'category': "Midsize Car", 'tco_10_years': 35000},
+    {'year': 2020, 'make': "Honda", 'model': "Civic", 'extra_text': " 4Dr", 'mpg': 32, 'category': "Compact Car", 'tco_10_years': 30000},
+    {'year': 2026, 'make': "Toyota", 'model': "Prius", 'extra_text': "", 'mpg': 58, 'category': "Hybrid Car", 'tco_10_years': 25000}
+]
+
+for vehicle in list_of_vehicles:
+    Vehicle.get_or_create(**vehicle)
+
+for vehicle in Vehicle.select():
+    print(f"{vehicle.year} {vehicle.make} {vehicle.model} - MPG: {vehicle.mpg}, TCO 10 Years: ${vehicle.tco_10_years:.2f}")
+    
 
 
 
@@ -57,6 +71,9 @@ def get_maintenance_cost(make, model):
     #print(response.text)
     soup = BeautifulSoup(response.text, "html.parser")
     table = soup.find_all("table")[0]
+    if not table:
+        print(f"No maintenance data found for {make} {model}")
+        return 0
     for row in table.find_all("tr")[1:]:
         cells = [td.get_text(strip=True) for td in row.find_all("td")]
         dollar_amount = cells[2]
@@ -64,16 +81,10 @@ def get_maintenance_cost(make, model):
         total_maintenance += int_amount
     #print(f"${total_maintenance:,}")
     return total_maintenance
-    
-list_of_vehicles = [
-    {"year": 2020, "make": "Toyota", "model": "Camry", "extra_text": ""},
-    {"year": 2020, "make": "Honda", "model": "Civic", "extra_text": " 4Dr"},
-    {"year": 2026, "make": "Toyota", "model": "Prius", "extra_text": ""},
-    {"year": 2020, "make": "Honda", "model": "Accord", "extra_text": ""},
-]
+
 
 for vehicle in list_of_vehicles:
-    mpg = get_fuel_data([vehicle["year"]], vehicle["make"], vehicle["model"]+vehicle["extra_text"])
+    mpg = get_fuel_data(vehicle["year"], vehicle["make"], vehicle["model"]+vehicle["extra_text"])
     ten_year_maintenance_cost = get_maintenance_cost(vehicle["make"], vehicle["model"])
     tco = 11000*10/int(mpg)*4.50 + ten_year_maintenance_cost
     print(f"{vehicle['year']} {vehicle['make']} {vehicle['model']} - Total Cost: ${tco:.2f}")
