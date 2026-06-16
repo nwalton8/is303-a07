@@ -1,0 +1,19 @@
+﻿Noah Walton
+IS303-A07
+
+
+Analysis Write Up
+1. Dataset Description. What data did you collect? From where? How many records? What are the columns/fields?
+The data that I collected for this is from “books.toscrap.com” for this project. I decided to collect an even one hundred books data as I wanted to have enough for strong analysis results. Each page contains twenty books so I scraped five pages in my code. For each book there are four fields: title, price, rating, and availability.
+2. Pipeline Description. Walk through each step of your pipeline: what does each function do? How do the pieces connect?
+fetch_page(url): This function fetches a singular url for one page of the website and if the status code is “200” it then returns a beautifu soup object. If another code is found then its considered a failure and will return “None.
+scrape_books(num_pages=5): For this function, it is set to loop through 5 pages, calling the fetch_page function. It parses each time, getting the four fields for each. Also includes a rate limit. A list of dictionaries is returned.
+store_books(book_list): Goes through all the books that were just gotten. If the book is not a duplicate, it is added to the class.
+analyze(): This queries the database to a pandas dataframe, running groupby analysis. For this I did groupby(“rating”) in my analytics. The data frame is returned at the end.
+visualize(df): This plots a bar chart using matplotlib. The data frame from the previous step is used in creating this.
+3. Findings. What did your analysis reveal? Reference your groupby results and chart. What was surprising or interesting?
+I found that price is not a good indicator of the star rating of a book. The average price for the star rating is as follows: one star is 35.52, two stars is 35.91, three stars is 36.84, four stars is 33.98, and five stars is 30.01. The five stars books having the lowest average caught me by surprise. Standard deviation of price is 14.64 so trying to draw a connection between the two variables seems silly.
+4. Ethical Considerations. How did you ensure your data collection was ethical? Did you check robots.txt? Did you use rate limiting? Are there any concerns about the data you collected?
+I have zero concerns because I used a website made for scraping. This saved me the trouble of worrying about the data I collected being ethical or not. 
+5. Limitations. What are the limits of your analysis? What would you do differently with more time?
+It is only five pages and could be all the pages on the site. I could add an input where you choose how many pages to scrape. This is also done with made-up data, so I can take the idea of this program and make it for an actual book site. This will mean that an analysis will have actual meaning.
